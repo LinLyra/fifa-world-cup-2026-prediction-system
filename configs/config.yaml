@@ -1,0 +1,13 @@
+paths:
+  group_fixtures: data/raw/group_fixtures.csv
+  knockout_slots: data/raw/knockout_slots.csv
+  predictions_dir: data/predictions
+model:
+  max_goals: 7
+  base_goals: 1.35
+  home_advantage_goals: 0.10
+  elo_goal_scale: 0.0035
+  draw_penalty_threshold: 0.04
+simulation:
+  n_simulations: 20000
+  random_seed: 42
