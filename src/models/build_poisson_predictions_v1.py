@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import poisson
 
-FIXTURES_FILE = Path("data/raw/group_fixtures.csv")
+FIXTURES_FILE = Path("data/raw/group_fixtures_final.csv")
 ATTACK_DEFENSE_FILE = Path("data/features/team_attack_defense_v2.csv")
 ELO_FILE = Path("data/processed/current_elo_v2.csv")
 

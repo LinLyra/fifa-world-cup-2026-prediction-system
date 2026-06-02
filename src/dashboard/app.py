@@ -1,5 +1,5 @@
 """
-FIFA World Cup 2026 Forecast Engine V2 — Public Dashboard
+FIFA World Cup 2026 Forecast Engine V1 — Public Dashboard
 Reads pre-computed model outputs; does not retrain anything.
 Run: streamlit run src/dashboard/app.py
 """
@@ -25,7 +25,7 @@ DATA = {
 
 SIMULATIONS = 20_000
 HISTORICAL_MATCHES = "49,000+"
-MODEL_VERSION = "V2 Forecast Engine"
+MODEL_VERSION = "V1 Base Forecast Engine"
 
 COLORS = {
     "pitch": "#1B5E20",
@@ -240,10 +240,10 @@ def render_hero(team_count: int | None) -> None:
     st.markdown(
         f"""
         <div class="hero-banner">
-            <h1>⚽ FIFA World Cup 2026 Forecast Engine V2</h1>
+            <h1>⚽ FIFA World Cup 2026 Forecast Engine V1</h1>
             <p>A probabilistic football forecasting system combining Elo ratings, squad value,
-            betting market odds, market-calibrated match xG (V2), Poisson goal modeling,
-            Dixon-Coles correction, and {SIMULATIONS:,} Monte Carlo tournament simulations.</p>
+            betting market odds, Poisson goal modeling, Dixon-Coles correction,
+            and {SIMULATIONS:,} Monte Carlo tournament simulations.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -380,7 +380,7 @@ def render_matchup_explorer(
 ) -> None:
     st.markdown('<div class="section-title">⚔️ Matchup Explorer</div>', unsafe_allow_html=True)
     if matchups is None:
-        warn_missing("matchups", "Match strength matrix (v2)")
+        warn_missing("matchups", "Match strength matrix")
         return
 
     matrix_teams = set(matchups["home_team"]) | set(matchups["away_team"])
@@ -484,7 +484,7 @@ def render_methodology() -> None:
             <li><strong>Attack / Defense strength ratings</strong> — Poisson-style offensive and defensive parameters per team.</li>
             <li><strong>Transfermarkt squad value layer</strong> — Market-value signal for squad quality depth.</li>
             <li><strong>Betting odds market calibration</strong> — Title odds from bookmakers anchor championship priors.</li>
-            <li><strong>Market-calibrated match xG (V2)</strong> — Shrinkage on attack/defense ratings plus market strength in single-match expected goals.</li>
+            <li><strong>Market-calibrated match xG</strong> — Shrinkage on attack/defense ratings plus market strength in single-match expected goals.</li>
             <li><strong>Poisson goal model</strong> — Expected goals and scoreline distributions for each fixture.</li>
             <li><strong>Dixon-Coles low-score correction</strong> — Adjusts 0–0, 1–0, 0–1, 1–1 probabilities.</li>
             <li><strong>Monte Carlo tournament simulation</strong> — 20,000 full tournament draws from group stage through the final.</li>
@@ -497,7 +497,7 @@ def render_methodology() -> None:
 
 def main() -> None:
     st.set_page_config(
-        page_title="FIFA World Cup 2026 Forecast Engine V2",
+        page_title="FIFA World Cup 2026 Forecast Engine V1",
         page_icon="⚽",
         layout="wide",
         initial_sidebar_state="collapsed",
@@ -537,7 +537,7 @@ def main() -> None:
     st.markdown(
         """
         <div class="footer-note">
-        This is a V2 forecast. Final squad, injury, suspension, odds updates,
+        This is a V1 base forecast. Final squad, injury, suspension, odds updates,
         and tactical news layers will be added after final squad announcements.
         </div>
         """,

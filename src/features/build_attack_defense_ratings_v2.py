@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 import pandas as pd
 import numpy as np
 
@@ -9,6 +10,13 @@ OUT_DIR = Path("data/features")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 OUT_FILE = OUT_DIR / "team_attack_defense_v2.csv"
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from utils.team_name_utils import canonical_team_name
 
 
 def build_team_rows(matches: pd.DataFrame) -> pd.DataFrame:
@@ -67,6 +75,10 @@ def tournament_weight(tournament: str) -> float:
 def main():
     matches = pd.read_csv(MATCH_FILE)
     matches["date"] = pd.to_datetime(matches["date"])
+
+    # Canonicalize team names early to keep the whole pipeline consistent.
+    matches["home_team"] = matches["home_team"].apply(canonical_team_name)
+    matches["away_team"] = matches["away_team"].apply(canonical_team_name)
 
     team_rows = build_team_rows(matches)
     team_rows["date"] = pd.to_datetime(team_rows["date"])
