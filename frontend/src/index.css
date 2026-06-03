@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .hero-banner {
+    @apply rounded-2xl px-6 py-8 text-white shadow-lg md:px-10;
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 55%, #388e3c 100%);
+    box-shadow: 0 8px 32px rgba(27, 94, 32, 0.25);
+  }
+
+  .hero-head {
+    @apply mb-2 flex flex-wrap items-baseline justify-between gap-2;
+  }
+
+  .hero-banner h1 {
+    @apply m-0 flex-1 text-2xl font-extrabold tracking-tight md:text-4xl;
+  }
+
+  .hero-banner p {
+    @apply m-0 text-base leading-relaxed text-white/90;
+  }
+
+  .hero-byline {
+    @apply shrink-0 whitespace-nowrap text-sm text-white/90;
+  }
+
+  .hero-signature {
+    font-family: "Brush Script MT", "Segoe Script", "Snell Roundhand", "Apple Chancery", cursive;
+    @apply text-2xl italic;
+  }
+
+  .metric-card {
+    @apply flex min-h-[96px] flex-col justify-center rounded-xl border border-[#E0E8E3] bg-white px-5 py-4;
+    border-left: 4px solid #c9a227;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .metric-card .label {
+    @apply text-xs font-semibold uppercase tracking-wider text-[#333];
+  }
+
+  .metric-card .value {
+    @apply mt-1 text-xl font-extrabold leading-tight text-[#111];
+  }
+
+  .section-title {
+    @apply mb-1 border-b-[3px] border-[#C9A227] pb-1 text-xl font-bold text-[#111];
+  }
+
+  .section-tagline {
+    @apply mb-4 text-sm italic text-[#555];
+  }
+
+  .method-box {
+    @apply rounded-xl border border-[#E0E8E3] bg-white p-6 leading-relaxed text-[#111];
+  }
+
+  .method-box h3 {
+    @apply mb-2 mt-5 text-base font-semibold text-[#1B5E20];
+  }
+
+  .method-box h3:first-child {
+    @apply mt-0;
+  }
+
+  .footer-note {
+    @apply mt-8 border-t border-[#E0E8E3] py-6 text-center text-sm text-[#333];
+  }
+
+  .dashboard-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    @apply border-b border-[#E0E8E3] px-3.5 py-4 text-left align-middle text-[#111];
+  }
+
+  .dashboard-table th {
+    @apply bg-[#F7F9F8] text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .dashboard-table tr:hover td {
+    @apply bg-[#F7F9F8];
+  }
+}
