@@ -84,4 +84,39 @@
   .dashboard-table tr:hover td {
     @apply bg-[#F7F9F8];
   }
+
+  .bracket-zoom-root {
+    @apply w-full;
+  }
+
+  .bracket-zoom-toolbar {
+    @apply mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-slate-800/90 px-3 py-2;
+  }
+
+  .bracket-zoom-toolbar button {
+    @apply min-w-[36px] rounded-md border border-slate-600 bg-slate-700 px-2 py-1 text-sm font-bold text-slate-100 hover:bg-slate-600;
+  }
+
+  .bracket-zoom-pct {
+    @apply w-14 rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-center text-sm text-slate-100;
+  }
+
+  .bracket-zoom-canvas {
+    @apply w-full overflow-auto rounded-lg border border-slate-700 bg-slate-950;
+    cursor: grab;
+  }
+
+  .bracket-zoom-canvas.dragging {
+    cursor: grabbing;
+  }
+
+  .bracket-zoom-spacer {
+    display: inline-block;
+    min-width: 100%;
+  }
+
+  .bracket-zoom-stage {
+    transform-origin: 0 0;
+    display: inline-block;
+  }
 }

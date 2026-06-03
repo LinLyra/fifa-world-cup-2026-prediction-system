@@ -1,5 +1,19 @@
 import { useMemo, useState } from "react";
 import type { ReachProbRow } from "../types";
+import BracketZoomCanvas from "./BracketZoomCanvas";
+import {
+  LEFT_QF,
+  LEFT_R16,
+  LEFT_R32,
+  LEFT_SF,
+  RIGHT_QF,
+  RIGHT_R16,
+  RIGHT_R32,
+  RIGHT_SF,
+  pathChainOrdered,
+  roundShortLabel,
+  traceTeamPath,
+} from "../utils/bracketPath";
 
 export type BracketMatch = {
   match_id: number;
@@ -84,71 +98,59 @@ const DEFAULT_FLAGS: Record<string, string> = {
   Uzbekistan: "🇺🇿",
 };
 
-const LEFT_R32 = [73, 74, 76, 79, 81, 82, 86, 88];
-const RIGHT_R32 = [75, 77, 78, 80, 83, 84, 85, 87];
-const LEFT_R16 = [89, 90, 91, 92];
-const RIGHT_R16 = [93, 94, 95, 96];
-const LEFT_QF = [97, 98];
-const RIGHT_QF = [99, 100];
-const LEFT_SF = [101];
-const RIGHT_SF = [102];
-
-function teamInMatch(m: BracketMatch, team: string | null): boolean {
-  if (!team) return false;
-  return m.home === team || m.away === team || m.winner === team;
-}
-
 function MatchCard({
   m,
-  active,
+  activeTeam,
+  onPath,
+  dimmed,
   flag,
   onHover,
+  championProb,
 }: {
   m: BracketMatch;
-  active: boolean;
+  activeTeam: string | null;
+  onPath: boolean;
+  dimmed: boolean;
   flag: (t: string) => string;
   onHover: (m: BracketMatch) => void;
+  championProb?: number;
 }) {
   const homeWin = m.winner === m.home;
   const awayWin = m.winner === m.away;
+
   return (
     <div
-      className={`rounded-lg border-2 px-2.5 py-2 transition-colors ${
-        active
-          ? "border-blue-500 bg-blue-950/50"
+      className={`rounded-lg border-2 px-2.5 py-2 transition-all ${
+        onPath
+          ? "border-sky-400 bg-sky-950/60 shadow-md shadow-sky-500/20"
           : "border-slate-600 bg-slate-900"
-      }`}
+      } ${dimmed ? "opacity-30" : "opacity-100"}`}
       onMouseEnter={() => onHover(m)}
     >
       <div
         className={`flex items-center gap-2 rounded-md px-1 py-1 ${
           homeWin ? "bg-blue-500/25 ring-1 ring-blue-500" : ""
-        }`}
+        } ${activeTeam === m.home ? "ring-1 ring-amber-400" : ""}`}
       >
         <span className="text-xl leading-none">{flag(m.home)}</span>
-        <span className="flex-1 text-xs font-semibold text-slate-100">
-          {m.home}
-        </span>
-        <span className="text-xs text-slate-400">
-          {(m.p_home * 100).toFixed(0)}%
-        </span>
+        <span className="flex-1 text-xs font-semibold text-slate-100">{m.home}</span>
+        <span className="text-xs text-slate-400">{(m.p_home * 100).toFixed(1)}%</span>
       </div>
-      <div className="my-0.5 text-center text-[10px] font-extrabold tracking-wider text-slate-500">
-        VS
-      </div>
+      <div className="my-0.5 text-center text-[10px] font-extrabold tracking-wider text-slate-500">VS</div>
       <div
         className={`flex items-center gap-2 rounded-md px-1 py-1 ${
           awayWin ? "bg-blue-500/25 ring-1 ring-blue-500" : ""
-        }`}
+        } ${activeTeam === m.away ? "ring-1 ring-amber-400" : ""}`}
       >
         <span className="text-xl leading-none">{flag(m.away)}</span>
-        <span className="flex-1 text-xs font-semibold text-slate-100">
-          {m.away}
-        </span>
-        <span className="text-xs text-slate-400">
-          {(m.p_away * 100).toFixed(0)}%
-        </span>
+        <span className="flex-1 text-xs font-semibold text-slate-100">{m.away}</span>
+        <span className="text-xs text-slate-400">{(m.p_away * 100).toFixed(1)}%</span>
       </div>
+      {championProb !== undefined && m.match_id === 104 && (
+        <p className="mt-2 text-center text-xs text-amber-200">
+          {flag(m.winner)} <strong>{m.winner}</strong> · {(championProb * 100).toFixed(1)}% title
+        </p>
+      )}
     </div>
   );
 }
@@ -158,6 +160,8 @@ function RoundColumn({
   ids,
   byId,
   activeTeam,
+  pathIds,
+  focusOnly,
   flag,
   onHover,
   slotMargin,
@@ -166,37 +170,177 @@ function RoundColumn({
   ids: number[];
   byId: Record<number, BracketMatch>;
   activeTeam: string | null;
+  pathIds: Set<number>;
+  focusOnly: boolean;
   flag: (t: string) => string;
   onHover: (m: BracketMatch) => void;
   slotMargin?: number[];
 }) {
+  const slots = ids
+    .map((id, i) => {
+      const m = byId[id];
+      if (!m) return null;
+      if (focusOnly && activeTeam && !pathIds.has(id)) return null;
+      const onPath = pathIds.has(id);
+      const dimmed = Boolean(activeTeam && !onPath);
+      const mt = slotMargin?.[i] ?? 0;
+      return (
+        <div key={id} style={{ marginTop: mt }} className="mb-1.5">
+          <MatchCard
+            m={m}
+            activeTeam={activeTeam}
+            onPath={onPath}
+            dimmed={dimmed}
+            flag={flag}
+            onHover={onHover}
+          />
+        </div>
+      );
+    })
+    .filter(Boolean);
+
+  if (focusOnly && activeTeam && slots.length === 0) return null;
+
   return (
-    <div className="min-w-[200px]">
-      <div className="mb-2 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400">
-        {label}
+    <div className="min-w-[188px] shrink-0">
+      <div className="mb-2 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
+      {slots}
+    </div>
+  );
+}
+
+function FullBracketGrid({
+  byId,
+  activeTeam,
+  pathIds,
+  focusOnly,
+  flag,
+  onHover,
+  championProbs,
+}: {
+  byId: Record<number, BracketMatch>;
+  activeTeam: string | null;
+  pathIds: Set<number>;
+  focusOnly: boolean;
+  flag: (t: string) => string;
+  onHover: (m: BracketMatch) => void;
+  championProbs: Record<string, number>;
+}) {
+  const final = byId[104];
+  const r32Gap = 8;
+  const r16Gap = 52;
+  const qfGap = 120;
+  const sfGap = 280;
+  const r32Margins = [0, ...Array(7).fill(r32Gap)];
+
+  const col = (label: string, ids: number[], margin?: number[]) => (
+    <RoundColumn
+      label={label}
+      ids={ids}
+      byId={byId}
+      activeTeam={activeTeam}
+      pathIds={pathIds}
+      focusOnly={focusOnly}
+      flag={flag}
+      onHover={onHover}
+      slotMargin={margin}
+    />
+  );
+
+  return (
+    <div className="inline-flex min-w-max items-start justify-center gap-3 py-2">
+      <div className="flex gap-2">
+        {col("R32", LEFT_R32, r32Margins)}
+        {col("R16", LEFT_R16, [r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3])}
+        {col("QF", LEFT_QF, [qfGap, qfGap * 3])}
+        {col("SF", LEFT_SF, [sfGap])}
       </div>
-      {ids.map((id, i) => {
-        const m = byId[id];
-        if (!m) return null;
-        const mt = slotMargin?.[i] ?? 0;
-        return (
-          <div key={id} style={{ marginTop: mt }} className="mb-1.5">
-            <MatchCard
-              m={m}
-              active={teamInMatch(m, activeTeam)}
-              flag={flag}
-              onHover={onHover}
-            />
-          </div>
-        );
-      })}
+
+      {final && (
+        <div className="mt-[120px] flex w-[200px] shrink-0 flex-col items-center px-2">
+          <div className="mb-3 text-lg font-extrabold text-amber-400">🏆 FINAL</div>
+          <MatchCard
+            m={final}
+            activeTeam={activeTeam}
+            onPath={pathIds.has(104)}
+            dimmed={Boolean(activeTeam && !pathIds.has(104))}
+            flag={flag}
+            onHover={onHover}
+            championProb={championProbs[final.winner]}
+          />
+        </div>
+      )}
+
+      <div className="flex flex-row-reverse gap-2">
+        {col("SF", RIGHT_SF, [sfGap])}
+        {col("QF", RIGHT_QF, [qfGap, qfGap * 3])}
+        {col("R16", RIGHT_R16, [r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3])}
+        {col("R32", RIGHT_R32, r32Margins)}
+      </div>
+    </div>
+  );
+}
+
+function JourneyLane({
+  chain,
+  activeTeam,
+  pathIds,
+  flag,
+  onHover,
+}: {
+  chain: BracketMatch[];
+  activeTeam: string;
+  pathIds: Set<number>;
+  flag: (t: string) => string;
+  onHover: (m: BracketMatch) => void;
+}) {
+  if (!chain.length) {
+    return (
+      <p className="rounded-lg border border-amber-500/40 bg-amber-950/30 p-4 text-sm text-amber-100">
+        <strong>{activeTeam}</strong> does not appear on the consensus Round of 32 draw.
+      </p>
+    );
+  }
+
+  const stops = chain.map((m) => roundShortLabel(m.round)).join(" → ");
+
+  return (
+    <div>
+      <p className="mb-3 text-sm text-slate-300">
+        Most probable knockout route for {flag(activeTeam)}{" "}
+        <strong className="text-amber-300">{activeTeam}</strong> — stops when the model favours an opponent.
+        <br />
+        <span className="text-sky-400">{stops}</span>
+      </p>
+      <div className="overflow-x-auto pb-2">
+        <div className="flex min-w-max items-center gap-2">
+          {chain.map((m, i) => (
+            <div key={m.match_id} className="flex items-center gap-2">
+              {i > 0 && <span className="text-2xl font-bold text-sky-500">→</span>}
+              <div className="w-[188px] shrink-0">
+                <div className="mb-1 text-center text-[10px] font-bold uppercase text-slate-500">
+                  {roundShortLabel(m.round)}
+                </div>
+                <MatchCard
+                  m={m}
+                  activeTeam={activeTeam}
+                  onPath={pathIds.has(m.match_id)}
+                  dimmed={false}
+                  flag={flag}
+                  onHover={onHover}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function BracketPathTree({ data, reachProbs = [] }: Props) {
   const [activeTeam, setActiveTeam] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<string>("");
+  const [tooltip, setTooltip] = useState("");
 
   const flags = { ...DEFAULT_FLAGS, ...data.flags };
 
@@ -217,191 +361,127 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
     return Array.from(s).sort();
   }, [data.matches]);
 
+  const pathIds = useMemo(
+    () => traceTeamPath(data.matches, data.links, activeTeam),
+    [data.matches, data.links, activeTeam]
+  );
+
+  const pathChain = useMemo(
+    () => pathChainOrdered(data.matches, pathIds),
+    [data.matches, pathIds]
+  );
+
   const onHoverNode = (m: BracketMatch) => {
     const pWin = m.winner === m.home ? m.p_home : m.p_away;
     const title = data.champion_probs[m.winner] ?? 0;
     const path = data.path_difficulty[m.winner];
-    const pathTxt =
-      path !== undefined && !Number.isNaN(path) ? path.toFixed(2) : "—";
+    const pathTxt = path !== undefined && !Number.isNaN(path) ? path.toFixed(2) : "—";
     setTooltip(
-      `${flag(m.home)} ${m.home} vs ${flag(m.away)} ${m.away} → ${m.winner} | KO ${(pWin * 100).toFixed(0)}% | Title ${(title * 100).toFixed(1)}% | Path ${pathTxt}`
+      `${flag(m.home)} ${m.home} vs ${flag(m.away)} ${m.away} → ${m.winner} | KO ${(pWin * 100).toFixed(1)}% | Title ${(title * 100).toFixed(1)}% | Path ${pathTxt}`
     );
   };
 
   const final = byId[104];
-  const r32Gap = 8;
-  const r16Gap = 52;
-  const qfGap = 120;
-  const sfGap = 280;
-  const r32Margins = [0, ...Array(7).fill(r32Gap)];
-
-  const leftSide = (
-    <>
-      <RoundColumn
-        label="R32"
-        ids={LEFT_R32}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={r32Margins}
-      />
-      <RoundColumn
-        label="R16"
-        ids={LEFT_R16}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={[r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3]}
-      />
-      <RoundColumn
-        label="QF"
-        ids={LEFT_QF}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={[qfGap, qfGap * 3]}
-      />
-      <RoundColumn
-        label="SF"
-        ids={LEFT_SF}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={[sfGap]}
-      />
-    </>
-  );
-
-  const rightSide = (
-    <>
-      <RoundColumn
-        label="SF"
-        ids={RIGHT_SF}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={[sfGap]}
-      />
-      <RoundColumn
-        label="QF"
-        ids={RIGHT_QF}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={[qfGap, qfGap * 3]}
-      />
-      <RoundColumn
-        label="R16"
-        ids={RIGHT_R16}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={[r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3]}
-      />
-      <RoundColumn
-        label="R32"
-        ids={RIGHT_R32}
-        byId={byId}
-        activeTeam={activeTeam}
-        flag={flag}
-        onHover={onHoverNode}
-        slotMargin={r32Margins}
-      />
-    </>
-  );
+  const reach = activeTeam ? reachProbs.find((x) => x.team === activeTeam) : null;
 
   return (
     <div className="w-full rounded-xl bg-gradient-to-b from-slate-950 to-slate-900 p-4 shadow-xl ring-1 ring-slate-700">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <label className="text-sm text-slate-300">Highlight team path</label>
+        <label className="text-sm text-slate-300">Most Probable Knockout Journey</label>
         <select
-          className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+          className="max-w-xs rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100"
           value={activeTeam ?? ""}
           onChange={(e) => setActiveTeam(e.target.value || null)}
         >
-          <option value="">— Select team —</option>
+          <option value="">— Full bracket (no team selected) —</option>
           {teams.map((t) => (
             <option key={t} value={t}>
               {flag(t)} {t}
             </option>
           ))}
         </select>
-        {activeTeam && (
-          <span className="text-sm text-blue-400">
-            {flag(activeTeam)} Path for <strong>{activeTeam}</strong>
-          </span>
-        )}
       </div>
 
-      {activeTeam && reachProbs.length > 0 && (() => {
-        const r = reachProbs.find((x) => x.team === activeTeam);
-        if (!r) return null;
-        const metrics = [
-          ["Reach R32", r.reach_r32],
-          ["Reach R16", r.reach_r16],
-          ["Reach QF", r.reach_qf],
-          ["Reach SF", r.reach_sf],
-          ["Reach Final", r.reach_final],
-          ["Win World Cup", r.reach_win],
-        ] as const;
-        return (
-          <div className="mb-4 grid grid-cols-3 gap-2 md:grid-cols-6">
-            {metrics.map(([label, val]) => (
-              <div key={label} className="rounded-lg bg-slate-800/80 px-2 py-2 text-center">
-                <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
-                <div className="text-sm font-bold text-slate-100">{(val * 100).toFixed(0)}%</div>
-              </div>
-            ))}
-          </div>
-        );
-      })()}
-
-      {tooltip && (
-        <p className="mb-3 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-blue-500/40">
-          {tooltip}
-        </p>
+      {activeTeam && (
+        <div className="mb-4 rounded-lg border border-sky-500/30 bg-sky-950/40 p-3 text-sm text-slate-200">
+          Highlighted route = the <strong>most likely knockout path</strong> for this team on the consensus bracket.
+          It is <strong>not</strong> a guaranteed route or a title prediction.
+        </div>
       )}
 
-      <div className="overflow-x-auto">
-        <div className="mx-auto flex min-w-[1100px] items-start justify-center gap-3">
-          <div className="flex gap-2.5">{leftSide}</div>
-
-          {final && (
-            <div className="mt-[120px] flex min-w-[220px] flex-col items-center px-2">
-              <div className="mb-3 text-lg font-extrabold text-amber-400">
-                🏆 FINAL
-              </div>
-              <MatchCard
-                m={final}
-                active={teamInMatch(final, activeTeam)}
-                flag={flag}
-                onHover={onHoverNode}
-              />
-              <p className="mt-3 text-center text-sm text-amber-200">
-                {flag(final.winner)}{" "}
-                <strong>{final.winner}</strong>
-                <span className="mt-1 block text-xs text-slate-400">
-                  {((data.champion_probs[final.winner] ?? 0) * 100).toFixed(1)}%
-                  title
-                </span>
-              </p>
+      {reach && (
+        <div className="mb-4 grid grid-cols-3 gap-2 md:grid-cols-6">
+          {(
+            [
+              ["Reach R32", reach.reach_r32],
+              ["Reach R16", reach.reach_r16],
+              ["Reach QF", reach.reach_qf],
+              ["Reach SF", reach.reach_sf],
+              ["Reach Final", reach.reach_final],
+              ["Win World Cup", reach.reach_win],
+            ] as const
+          ).map(([label, val]) => (
+            <div key={label} className="rounded-lg bg-slate-800/80 px-2 py-2 text-center">
+              <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
+              <div className="text-sm font-bold text-slate-100">{(val * 100).toFixed(0)}%</div>
             </div>
-          )}
-
-          <div className="flex flex-row-reverse gap-2.5">{rightSide}</div>
+          ))}
         </div>
-      </div>
+      )}
 
-      <p className="mt-3 text-center text-xs text-slate-500">
-        Flag vs flag bracket — modal R32 draw + model knockout win probabilities.
-      </p>
+      {tooltip && (
+        <p className="mb-3 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-blue-500/40">{tooltip}</p>
+      )}
+
+      {activeTeam ? (
+        <>
+          <JourneyLane
+            chain={pathChain}
+            activeTeam={activeTeam}
+            pathIds={pathIds}
+            flag={flag}
+            onHover={onHoverNode}
+          />
+
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-semibold text-sky-400 hover:text-sky-300">
+              View full consensus bracket (all teams)
+            </summary>
+            <div className="mt-3">
+              <BracketZoomCanvas height={520}>
+                <FullBracketGrid
+                  byId={byId}
+                  activeTeam={activeTeam}
+                  pathIds={pathIds}
+                  focusOnly={false}
+                  flag={flag}
+                  onHover={onHoverNode}
+                  championProbs={data.champion_probs}
+                />
+              </BracketZoomCanvas>
+            </div>
+          </details>
+        </>
+      ) : (
+        <BracketZoomCanvas height={600}>
+          <FullBracketGrid
+            byId={byId}
+            activeTeam={null}
+            pathIds={new Set()}
+            focusOnly={false}
+            flag={flag}
+            onHover={onHoverNode}
+            championProbs={data.champion_probs}
+          />
+        </BracketZoomCanvas>
+      )}
+
+      {final && !activeTeam && (
+        <p className="mt-3 text-center text-xs text-slate-500">
+          Consensus final: {flag(final.home)} {final.home} vs {flag(final.away)} {final.away} → {final.winner} (
+          {((data.champion_probs[final.winner] ?? 0) * 100).toFixed(1)}% title)
+        </p>
+      )}
     </div>
   );
 }

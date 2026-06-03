@@ -18,7 +18,10 @@ export default function BracketTab({ bracket, reachProbs }: Props) {
         Single most-likely tournament tree from the modal Round of 32 draw and model win probabilities. This is{" "}
         <strong>not</strong> every parallel simulation — it is one readable reference bracket.
       </p>
-      <p className="mb-4 text-sm text-[#555]">Select a team to highlight their path and view knockout reach rates.</p>
+      <p className="mb-4 text-sm text-[#555]">
+        Use <strong>Fit</strong>, drag, scroll, or <strong>+/−</strong> on the full bracket. Select a team to see their
+        knockout journey as a separate path (full bracket stays in the expander below).
+      </p>
 
       <BracketPathTree data={bracket} reachProbs={reachProbs} />
 
