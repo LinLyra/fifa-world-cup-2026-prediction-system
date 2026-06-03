@@ -22,8 +22,9 @@ export default function ChampionTab({ champions }: Props) {
     0,
     CHAMPION_TOP_N
   );
-  // Recharts lists first row at bottom — ascending prob puts highest bar on top (matches table).
-  const chartData = [...contenders].reverse().map((c) => ({
+  // High → low: first row renders at top (must match table on the right).
+  const teamsTopToBottom = contenders.map((c) => c.team);
+  const chartData = contenders.map((c) => ({
     team: c.team,
     prob: c.champion_prob,
     label: pct(c.champion_prob, 2),
@@ -48,7 +49,14 @@ export default function ChampionTab({ champions }: Props) {
               <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 48, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E0E8E3" horizontal={false} />
                 <XAxis type="number" tickFormatter={(v) => pct(v, 0)} domain={[0, "auto"]} />
-                <YAxis type="category" dataKey="team" width={110} tick={{ fontSize: 12 }} />
+                <YAxis
+                  type="category"
+                  dataKey="team"
+                  width={120}
+                  tick={{ fontSize: 12 }}
+                  ticks={teamsTopToBottom}
+                  interval={0}
+                />
                 <Tooltip formatter={(v: number) => pct(v, 2)} />
                 <Bar dataKey="prob" fill={COLORS.gold} radius={[0, 4, 4, 0]} label={{ position: "right", formatter: (v: number) => pct(v, 2) }} />
               </BarChart>
