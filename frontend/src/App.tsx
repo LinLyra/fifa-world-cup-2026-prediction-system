@@ -10,6 +10,7 @@ import PathDifficultyTab from "./components/tabs/PathDifficultyTab";
 import PowerRankingsTab from "./components/tabs/PowerRankingsTab";
 import { useDashboardData } from "./hooks/useDashboardData";
 import { SIMULATIONS } from "./utils/format";
+import { wcTeamSet } from "./utils/wcTeams";
 
 const TABS = [
   { id: "champion", label: "🏆 Champion" },
@@ -43,9 +44,7 @@ export default function App() {
     );
   }
 
-  const teams = Array.from(
-    new Set(data.matchMatrix.flatMap((m) => [m.home_team, m.away_team]))
-  ).sort();
+  const teams = wcTeamSet(data.fixtures, data.groups, data.champions);
 
   const selectTab = (id: TabId) => {
     setTab(id);
@@ -85,6 +84,7 @@ export default function App() {
             <MatchupsTab
               matchMatrix={data.matchMatrix}
               finalIntel={data.finalIntel}
+              fixtures={data.fixtures}
               intelligence={data.intelligence}
               teams={teams}
             />

@@ -64,6 +64,13 @@ export type ReachProbRow = {
   reach_win: number;
 };
 
+export type FixtureRow = {
+  match_id: number;
+  group: string;
+  home_team: string;
+  away_team: string;
+};
+
 export type Meta = {
   engine: string;
   simulations: number;
@@ -102,6 +109,7 @@ export type DashboardData = {
   meta: Meta;
   champions: ChampionRow[];
   groups: GroupRow[];
+  fixtures: FixtureRow[];
   intelligence: IntelligenceRow[];
   pathDifficulty: PathDifficultyRow[];
   matchMatrix: MatchMatrixRow[];

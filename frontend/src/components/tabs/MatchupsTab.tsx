@@ -9,28 +9,37 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { FinalIntelRow, IntelligenceRow, MatchMatrixRow } from "../../types";
+import type { FinalIntelRow, FixtureRow, IntelligenceRow, MatchMatrixRow } from "../../types";
 import Section from "../Section";
 import { COLORS, parseScorelines, pct } from "../../utils/format";
 import { confidenceEmoji, modelConfidence } from "../../utils/modelConfidence";
+import { isScheduledGroupFixture } from "../../utils/wcTeams";
 
 type Props = {
   matchMatrix: MatchMatrixRow[];
   finalIntel: FinalIntelRow[];
+  fixtures: FixtureRow[];
   intelligence: IntelligenceRow[];
   teams: string[];
 };
 
-export default function MatchupsTab({ matchMatrix, finalIntel, intelligence, teams }: Props) {
-  const ranked = useMemo(
-    () => [...intelligence].sort((a, b) => b.intelligence_score_v2 - a.intelligence_score_v2),
-    [intelligence]
-  );
-  const defaultA = ranked[0]?.team ?? teams[0];
-  const defaultB = ranked[1]?.team ?? teams[1];
+function defaultPair(teams: string[], intelligence: IntelligenceRow[]): [string, string] {
+  const wc = new Set(teams);
+  const ranked = [...intelligence]
+    .filter((t) => wc.has(t.team))
+    .sort((a, b) => b.intelligence_score_v2 - a.intelligence_score_v2);
+  const a = ranked[0]?.team ?? teams[0];
+  const b = ranked[1]?.team ?? teams.find((t) => t !== a) ?? teams[1];
+  return [a, b];
+}
 
-  const [teamA, setTeamA] = useState(defaultA);
-  const [teamB, setTeamB] = useState(defaultB !== defaultA ? defaultB : teams.find((t) => t !== defaultA) ?? defaultB);
+export default function MatchupsTab({ matchMatrix, finalIntel, fixtures, intelligence, teams }: Props) {
+  const [initialA, initialB] = useMemo(() => defaultPair(teams, intelligence), [teams, intelligence]);
+  const [teamA, setTeamA] = useState(initialA);
+  const [teamB, setTeamB] = useState(initialB);
+
+  const groupFixtureCount = fixtures.length;
+  const scheduledGroup = isScheduledGroupFixture(fixtures, teamA, teamB);
 
   const others = teams.filter((t) => t !== teamA);
   const row = matchMatrix.find((m) => m.home_team === teamA && m.away_team === teamB);
@@ -42,6 +51,13 @@ export default function MatchupsTab({ matchMatrix, finalIntel, intelligence, tea
 
   return (
     <Section title="⚔️ Matchup Explorer" tagline="What happens if Team A plays Team B?">
+      <p className="mb-4 text-sm text-[#555]">
+        <strong>{teams.length} World Cup teams</strong> in the dropdown (same 48 as the tournament draw). The model
+        scores any <em>hypothetical</em> home vs away pairing among them ({teams.length}×{teams.length - 1} ={" "}
+        {teams.length * (teams.length - 1)} directions) — most pairs will <strong>never meet</strong> in 2026, but the
+        matrix answers &quot;if they played today.&quot; Only <strong>{groupFixtureCount} group-stage fixtures</strong>{" "}
+        are on the official schedule; those can show extra pre-match intelligence when available.
+      </p>
       <div className="mb-4 grid gap-4 md:grid-cols-2">
         <label className="block text-sm font-medium text-[#111]">
           Team A (Home)
@@ -85,6 +101,22 @@ export default function MatchupsTab({ matchMatrix, finalIntel, intelligence, tea
         </p>
       ) : (
         <>
+          {scheduledGroup && fin ? (
+            <p className="mb-3 rounded-lg border border-[#C9A227]/40 bg-[#FFF8E7] px-3 py-2 text-sm text-[#333]">
+              <strong>Group-stage fixture on schedule</strong> — pre-match intelligence adjustments applied to xG.
+            </p>
+          ) : scheduledGroup ? (
+            <p className="mb-3 rounded-lg border border-[#E0E8E3] bg-white px-3 py-2 text-sm text-[#555]">
+              This pairing is a <strong>scheduled group-stage match</strong> (home/away as listed). Using base model
+              probabilities (no live intel row for this direction).
+            </p>
+          ) : (
+            <p className="mb-3 rounded-lg border border-[#E0E8E3] bg-[#F7F9F8] px-3 py-2 text-sm text-[#555]">
+              <strong>Hypothetical matchup</strong> — not a scheduled group game. Useful for comparing strengths; these
+              teams may not face each other in the tournament.
+            </p>
+          )}
+
           {confidence && (
             <div className="mb-4 rounded-lg border border-[#E0E8E3] bg-white p-4 text-sm">
               <p className="font-semibold">
