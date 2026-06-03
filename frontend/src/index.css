@@ -104,6 +104,7 @@
   .bracket-zoom-canvas {
     @apply w-full overflow-auto rounded-lg border border-slate-700 bg-slate-950;
     cursor: grab;
+    overscroll-behavior: contain;
   }
 
   .bracket-zoom-canvas.dragging {
@@ -111,12 +112,20 @@
   }
 
   .bracket-zoom-spacer {
-    display: inline-block;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
     min-width: 100%;
+    box-sizing: border-box;
   }
 
   .bracket-zoom-stage {
-    transform-origin: 0 0;
+    transform-origin: center top;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .bracket-zoom-inner {
     display: inline-block;
   }
 

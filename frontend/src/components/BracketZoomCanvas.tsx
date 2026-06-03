@@ -14,44 +14,40 @@ export default function BracketZoomCanvas({ children, height = 560, onReady }: P
   const canvasRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const spacerRef = useRef<HTMLDivElement>(null);
+  const scaleRef = useRef(DEFAULT_SCALE);
   const [scale, setScale] = useState(DEFAULT_SCALE);
   const [pctInput, setPctInput] = useState(Math.round(DEFAULT_SCALE * 100));
   const dragRef = useRef({ active: false, sx: 0, sy: 0, sl: 0, st: 0 });
 
-  const applyScale = useCallback(
-    (next: number) => {
-      const s = Math.max(MIN_SCALE, Math.min(MAX_SCALE, next));
-      setScale(s);
-      setPctInput(Math.round(s * 100));
-      const stage = stageRef.current;
-      const spacer = spacerRef.current;
-      if (stage) stage.style.transform = `scale(${s})`;
-      if (spacer && stage) {
-        spacer.style.width = `${Math.ceil(stage.offsetWidth * s)}px`;
-        spacer.style.height = `${Math.ceil(stage.offsetHeight * s)}px`;
-      }
-    },
-    []
-  );
+  const applyScale = useCallback((next: number) => {
+    const s = Math.max(MIN_SCALE, Math.min(MAX_SCALE, next));
+    scaleRef.current = s;
+    setScale(s);
+    setPctInput(Math.round(s * 100));
+    const stage = stageRef.current;
+    const spacer = spacerRef.current;
+    if (stage) stage.style.transform = `scale(${s})`;
+    if (spacer && stage) {
+      spacer.style.width = `${Math.ceil(stage.offsetWidth * s)}px`;
+      spacer.style.height = `${Math.ceil(stage.offsetHeight * s)}px`;
+    }
+  }, []);
 
-  const zoomAt = useCallback(
-    (clientX: number, clientY: number, delta: number) => {
-      const canvas = canvasRef.current;
-      const stage = stageRef.current;
-      if (!canvas || !stage) return;
-      const rect = canvas.getBoundingClientRect();
-      const mx = clientX - rect.left + canvas.scrollLeft;
-      const my = clientY - rect.top + canvas.scrollTop;
-      const oldScale = scale;
-      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
-      if (newScale === oldScale) return;
-      const ratio = newScale / oldScale;
-      applyScale(newScale);
-      canvas.scrollLeft = Math.max(0, mx * ratio - (clientX - rect.left));
-      canvas.scrollTop = Math.max(0, my * ratio - (clientY - rect.top));
-    },
-    [scale, applyScale]
-  );
+  const zoomAt = useCallback((clientX: number, clientY: number, delta: number) => {
+    const canvas = canvasRef.current;
+    const stage = stageRef.current;
+    if (!canvas || !stage) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = clientX - rect.left + canvas.scrollLeft;
+    const my = clientY - rect.top + canvas.scrollTop;
+    const oldScale = scaleRef.current;
+    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, oldScale + delta));
+    if (newScale === oldScale) return;
+    const ratio = newScale / oldScale;
+    applyScale(newScale);
+    canvas.scrollLeft = Math.max(0, mx * ratio - (clientX - rect.left));
+    canvas.scrollTop = Math.max(0, my * ratio - (clientY - rect.top));
+  }, [applyScale]);
 
   const viewportCenter = () => {
     const canvas = canvasRef.current;
@@ -65,8 +61,8 @@ export default function BracketZoomCanvas({ children, height = 560, onReady }: P
     const stage = stageRef.current;
     const spacer = spacerRef.current;
     if (!canvas || !stage || !spacer) return;
-    const cw = canvas.clientWidth - 24;
-    const ch = canvas.clientHeight - 24;
+    const cw = canvas.clientWidth;
+    const ch = canvas.clientHeight;
     stage.style.transform = "scale(1)";
     spacer.style.width = `${stage.offsetWidth}px`;
     spacer.style.height = `${stage.offsetHeight}px`;
@@ -80,30 +76,42 @@ export default function BracketZoomCanvas({ children, height = 560, onReady }: P
   }, [applyScale]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = e.deltaY < 0 ? 0.06 : -0.06;
+      zoomAt(e.clientX, e.clientY, delta);
+    };
+
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+
     const onMove = (e: MouseEvent) => {
       if (!dragRef.current.active) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       canvas.scrollLeft = dragRef.current.sl - (e.clientX - dragRef.current.sx);
       canvas.scrollTop = dragRef.current.st - (e.clientY - dragRef.current.sy);
     };
     const onUp = () => {
       dragRef.current.active = false;
-      canvasRef.current?.classList.remove("dragging");
+      canvas.classList.remove("dragging");
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+
     const t = window.setTimeout(() => {
       fitView();
       onReady?.();
-    }, 100);
+    }, 120);
+
     return () => {
+      canvas.removeEventListener("wheel", onWheel);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.clearTimeout(t);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fitView, onReady, zoomAt]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -112,19 +120,33 @@ export default function BracketZoomCanvas({ children, height = 560, onReady }: P
     if (spacer && stage) {
       spacer.style.width = `${Math.ceil(stage.offsetWidth * scale)}px`;
       spacer.style.height = `${Math.ceil(stage.offsetHeight * scale)}px`;
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const cw = canvas.clientWidth;
+        const ch = canvas.clientHeight;
+        canvas.scrollLeft = Math.max(0, (spacer.offsetWidth - cw) / 2);
+        canvas.scrollTop = Math.max(0, (spacer.offsetHeight - ch) / 2);
+      }
     }
   }, [scale, children]);
 
   const setScalePercent = (pct: number) => {
     const target = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pct / 100));
     const [cx, cy] = viewportCenter();
-    zoomAt(cx, cy, target - scale);
+    zoomAt(cx, cy, target - scaleRef.current);
   };
 
   return (
     <div className="bracket-zoom-root">
       <div className="bracket-zoom-toolbar">
-        <button type="button" onClick={() => { const [cx, cy] = viewportCenter(); zoomAt(cx, cy, -0.08); }} title="Zoom out">
+        <button
+          type="button"
+          onClick={() => {
+            const [cx, cy] = viewportCenter();
+            zoomAt(cx, cy, -0.08);
+          }}
+          title="Zoom out"
+        >
           −
         </button>
         <input
@@ -141,13 +163,20 @@ export default function BracketZoomCanvas({ children, height = 560, onReady }: P
           title="Zoom %"
         />
         <span className="text-xs text-slate-400">%</span>
-        <button type="button" onClick={() => { const [cx, cy] = viewportCenter(); zoomAt(cx, cy, 0.08); }} title="Zoom in">
+        <button
+          type="button"
+          onClick={() => {
+            const [cx, cy] = viewportCenter();
+            zoomAt(cx, cy, 0.08);
+          }}
+          title="Zoom in"
+        >
           +
         </button>
         <button type="button" onClick={fitView} title="Fit to view">
           Fit
         </button>
-        <span className="text-xs text-slate-500">Drag · scroll · wheel · Fit</span>
+        <span className="text-xs text-slate-500">Wheel = zoom · Drag = pan · Fit = center</span>
       </div>
 
       <div
@@ -168,17 +197,10 @@ export default function BracketZoomCanvas({ children, height = 560, onReady }: P
           canvas.classList.add("dragging");
           e.preventDefault();
         }}
-        onMouseLeave={() => {
-          if (!dragRef.current.active) return;
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-          zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 0.05 : -0.05);
-        }}
       >
         <div ref={spacerRef} className="bracket-zoom-spacer">
           <div ref={stageRef} className="bracket-zoom-stage">
-            {children}
+            <div className="bracket-zoom-inner">{children}</div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ReachProbRow } from "../types";
 import BracketZoomCanvas from "./BracketZoomCanvas";
+import TeamFlag from "./TeamFlag";
 import {
   LEFT_QF,
   LEFT_R16,
@@ -47,63 +48,11 @@ type Props = {
   reachProbs?: ReachProbRow[];
 };
 
-const DEFAULT_FLAGS: Record<string, string> = {
-  Algeria: "🇩🇿",
-  Argentina: "🇦🇷",
-  Australia: "🇦🇺",
-  Austria: "🇦🇹",
-  Belgium: "🇧🇪",
-  "Bosnia and Herzegovina": "🇧🇦",
-  Brazil: "🇧🇷",
-  Canada: "🇨🇦",
-  "Cape Verde": "🇨🇻",
-  Colombia: "🇨🇴",
-  Croatia: "🇭🇷",
-  Curaçao: "🇨🇼",
-  Czechia: "🇨🇿",
-  "Democratic Republic of Congo": "🇨🇩",
-  Ecuador: "🇪🇨",
-  Egypt: "🇪🇬",
-  England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-  France: "🇫🇷",
-  Germany: "🇩🇪",
-  Ghana: "🇬🇭",
-  Haiti: "🇭🇹",
-  Iran: "🇮🇷",
-  Iraq: "🇮🇶",
-  "Ivory Coast": "🇨🇮",
-  Japan: "🇯🇵",
-  Jordan: "🇯🇴",
-  Mexico: "🇲🇽",
-  Morocco: "🇲🇦",
-  Netherlands: "🇳🇱",
-  "New Zealand": "🇳🇿",
-  Norway: "🇳🇴",
-  Panama: "🇵🇦",
-  Paraguay: "🇵🇾",
-  Portugal: "🇵🇹",
-  Qatar: "🇶🇦",
-  "Saudi Arabia": "🇸🇦",
-  Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-  Senegal: "🇸🇳",
-  "South Africa": "🇿🇦",
-  "South Korea": "🇰🇷",
-  Spain: "🇪🇸",
-  Sweden: "🇸🇪",
-  Switzerland: "🇨🇭",
-  Tunisia: "🇹🇳",
-  Turkey: "🇹🇷",
-  "United States": "🇺🇸",
-  Uruguay: "🇺🇾",
-  Uzbekistan: "🇺🇿",
-};
-
 function MatchCard({
   m,
   activeTeam,
   onPath,
   dimmed,
-  flag,
   onHover,
   championProb,
 }: {
@@ -111,7 +60,6 @@ function MatchCard({
   activeTeam: string | null;
   onPath: boolean;
   dimmed: boolean;
-  flag: (t: string) => string;
   onHover: (m: BracketMatch) => void;
   championProb?: number;
 }) {
@@ -131,7 +79,7 @@ function MatchCard({
         t.win ? "bg-blue-500/25 ring-1 ring-blue-500" : ""
       } ${t.tracked ? "ring-1 ring-amber-400" : ""}`}
     >
-      <span className="text-xl leading-none">{flag(t.name)}</span>
+      <TeamFlag team={t.name} size={20} />
       <span className="flex-1 text-xs font-semibold text-slate-100">{t.name}</span>
       <span className="text-xs text-slate-400">{(t.p * 100).toFixed(1)}%</span>
     </div>
@@ -151,7 +99,8 @@ function MatchCard({
       {row(bottom)}
       {championProb !== undefined && m.match_id === 104 && (
         <p className="mt-2 text-center text-xs text-amber-200">
-          {flag(m.winner)} <strong>{m.winner}</strong> · {(championProb * 100).toFixed(1)}% title
+          <TeamFlag team={m.winner} size={16} className="mr-1 inline-block align-middle" />
+          <strong>{m.winner}</strong> · {(championProb * 100).toFixed(1)}% title
         </p>
       )}
     </div>
@@ -165,7 +114,6 @@ function RoundColumn({
   activeTeam,
   pathIds,
   focusOnly,
-  flag,
   onHover,
   slotMargin,
 }: {
@@ -175,7 +123,6 @@ function RoundColumn({
   activeTeam: string | null;
   pathIds: Set<number>;
   focusOnly: boolean;
-  flag: (t: string) => string;
   onHover: (m: BracketMatch) => void;
   slotMargin?: number[];
 }) {
@@ -194,7 +141,6 @@ function RoundColumn({
             activeTeam={activeTeam}
             onPath={onPath}
             dimmed={dimmed}
-            flag={flag}
             onHover={onHover}
           />
         </div>
@@ -217,7 +163,6 @@ function FullBracketGrid({
   activeTeam,
   pathIds,
   focusOnly,
-  flag,
   onHover,
   championProbs,
 }: {
@@ -225,7 +170,6 @@ function FullBracketGrid({
   activeTeam: string | null;
   pathIds: Set<number>;
   focusOnly: boolean;
-  flag: (t: string) => string;
   onHover: (m: BracketMatch) => void;
   championProbs: Record<string, number>;
 }) {
@@ -244,7 +188,6 @@ function FullBracketGrid({
       activeTeam={activeTeam}
       pathIds={pathIds}
       focusOnly={focusOnly}
-      flag={flag}
       onHover={onHover}
       slotMargin={margin}
     />
@@ -268,7 +211,6 @@ function FullBracketGrid({
             activeTeam={activeTeam}
             onPath={pathIds.has(104)}
             dimmed={Boolean(activeTeam && !pathIds.has(104))}
-            flag={flag}
             onHover={onHover}
             championProb={championProbs[final.winner]}
           />
@@ -290,13 +232,11 @@ function JourneyLane({
   chain,
   activeTeam,
   pathIds,
-  flag,
   onHover,
 }: {
   chain: BracketMatch[];
   activeTeam: string;
   pathIds: Set<number>;
-  flag: (t: string) => string;
   onHover: (m: BracketMatch) => void;
 }) {
   if (!chain.length) {
@@ -312,7 +252,7 @@ function JourneyLane({
   return (
     <div>
       <p className="mb-3 text-sm text-slate-300">
-        Most probable knockout route for {flag(activeTeam)}{" "}
+        Most probable knockout route for <TeamFlag team={activeTeam} size={18} className="mr-1 inline-block align-middle" />{" "}
         <strong className="text-amber-300">{activeTeam}</strong> — stops when the model favours an opponent.
         <br />
         <span className="text-sky-400">{stops}</span>
@@ -331,7 +271,6 @@ function JourneyLane({
                   activeTeam={activeTeam}
                   onPath={pathIds.has(m.match_id)}
                   dimmed={false}
-                  flag={flag}
                   onHover={onHover}
                 />
               </div>
@@ -347,14 +286,10 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
   const [activeTeam, setActiveTeam] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState("");
 
-  const flags = { ...DEFAULT_FLAGS, ...data.flags };
-
   const byId = useMemo(
     () => Object.fromEntries(data.matches.map((m) => [m.match_id, m])),
     [data.matches]
   );
-
-  const flag = (t: string) => flags[t] ?? "🏳️";
 
   const teams = useMemo(() => {
     const s = new Set<string>();
@@ -382,7 +317,7 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
     const path = data.path_difficulty[m.winner];
     const pathTxt = path !== undefined && !Number.isNaN(path) ? path.toFixed(2) : "—";
     setTooltip(
-      `${flag(m.home)} ${m.home} vs ${flag(m.away)} ${m.away} → ${m.winner} | KO ${(pWin * 100).toFixed(1)}% | Title ${(title * 100).toFixed(1)}% | Path ${pathTxt}`
+      `${m.home} vs ${m.away} → ${m.winner} | KO ${(pWin * 100).toFixed(1)}% | Title ${(title * 100).toFixed(1)}% | Path ${pathTxt}`
     );
   };
 
@@ -401,7 +336,7 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
           <option value="">— Full bracket (no team selected) —</option>
           {teams.map((t) => (
             <option key={t} value={t}>
-              {flag(t)} {t}
+              {t}
             </option>
           ))}
         </select>
@@ -444,7 +379,6 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
             chain={pathChain}
             activeTeam={activeTeam}
             pathIds={pathIds}
-            flag={flag}
             onHover={onHoverNode}
           />
 
@@ -459,7 +393,6 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
                   activeTeam={activeTeam}
                   pathIds={pathIds}
                   focusOnly={false}
-                  flag={flag}
                   onHover={onHoverNode}
                   championProbs={data.champion_probs}
                 />
@@ -474,7 +407,6 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
             activeTeam={null}
             pathIds={new Set()}
             focusOnly={false}
-            flag={flag}
             onHover={onHoverNode}
             championProbs={data.champion_probs}
           />
@@ -483,7 +415,7 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
 
       {final && !activeTeam && (
         <p className="mt-3 text-center text-xs text-slate-500">
-          Consensus final: {flag(final.home)} {final.home} vs {flag(final.away)} {final.away} → {final.winner} (
+          Consensus final: {final.home} vs {final.away} → {final.winner} (
           {((data.champion_probs[final.winner] ?? 0) * 100).toFixed(1)}% title)
         </p>
       )}
