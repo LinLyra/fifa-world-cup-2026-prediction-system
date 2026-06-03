@@ -130,11 +130,61 @@
   }
 
   .bracket-grid {
-    min-height: 640px;
+    display: inline-flex;
+    min-width: max-content;
+    min-height: 680px;
+    align-items: stretch;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 0;
   }
 
-  .bracket-side-left,
-  .bracket-side-right {
-    @apply flex items-stretch gap-2;
+  .bracket-side {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .bracket-round-col {
+    width: 188px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .bracket-round-label {
+    flex-shrink: 0;
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+
+  /* Same as Streamlit: equal column height, slots centered between prior round */
+  .bracket-round-slots {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 4px;
+  }
+
+  .bracket-slot {
+    flex-shrink: 0;
+  }
+
+  .bracket-final-col {
+    width: 200px;
+    flex-shrink: 0;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
   }
 }

@@ -115,7 +115,6 @@ function RoundColumn({
   pathIds,
   focusOnly,
   onHover,
-  slotMargin,
 }: {
   label: string;
   ids: number[];
@@ -124,18 +123,16 @@ function RoundColumn({
   pathIds: Set<number>;
   focusOnly: boolean;
   onHover: (m: BracketMatch) => void;
-  slotMargin?: number[];
 }) {
   const slots = ids
-    .map((id, i) => {
+    .map((id) => {
       const m = byId[id];
       if (!m) return null;
       if (focusOnly && activeTeam && !pathIds.has(id)) return null;
       const onPath = pathIds.has(id);
       const dimmed = Boolean(activeTeam && !onPath);
-      const mt = slotMargin?.[i] ?? 0;
       return (
-        <div key={id} style={{ marginTop: mt }} className="mb-1.5">
+        <div key={id} className="bracket-slot shrink-0">
           <MatchCard
             m={m}
             activeTeam={activeTeam}
@@ -151,9 +148,9 @@ function RoundColumn({
   if (focusOnly && activeTeam && slots.length === 0) return null;
 
   return (
-    <div className="min-w-[188px] shrink-0">
-      <div className="mb-2 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
-      {slots}
+    <div className="bracket-round-col">
+      <div className="bracket-round-label">{label}</div>
+      <div className="bracket-round-slots">{slots}</div>
     </div>
   );
 }
@@ -174,13 +171,8 @@ function FullBracketGrid({
   championProbs: Record<string, number>;
 }) {
   const final = byId[104];
-  const r32Gap = 8;
-  const r16Gap = 52;
-  const qfGap = 120;
-  const sfGap = 280;
-  const r32Margins = [0, ...Array(7).fill(r32Gap)];
 
-  const col = (label: string, ids: number[], margin?: number[]) => (
+  const col = (label: string, ids: number[]) => (
     <RoundColumn
       label={label}
       ids={ids}
@@ -189,22 +181,21 @@ function FullBracketGrid({
       pathIds={pathIds}
       focusOnly={focusOnly}
       onHover={onHover}
-      slotMargin={margin}
     />
   );
 
   return (
-    <div className="bracket-grid inline-flex min-w-max items-stretch justify-center gap-2.5 py-2">
+    <div className="bracket-grid">
       {/* Left: R32 (outer) → SF (toward final) */}
-      <div className="bracket-side-left flex gap-2">
-        {col("R32", LEFT_R32, r32Margins)}
-        {col("R16", LEFT_R16, [r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3])}
-        {col("QF", LEFT_QF, [qfGap, qfGap * 3])}
-        {col("SF", LEFT_SF, [sfGap])}
+      <div className="bracket-side">
+        {col("R32", LEFT_R32)}
+        {col("R16", LEFT_R16)}
+        {col("QF", LEFT_QF)}
+        {col("SF", LEFT_SF)}
       </div>
 
       {final && (
-        <div className="mt-[120px] flex w-[200px] shrink-0 flex-col items-center px-2">
+        <div className="bracket-final-col">
           <div className="mb-3 text-lg font-extrabold text-amber-400">🏆 FINAL</div>
           <MatchCard
             m={final}
@@ -217,12 +208,12 @@ function FullBracketGrid({
         </div>
       )}
 
-      {/* Right: SF (toward final) → R32 (outer edge), mirrors Streamlit */}
-      <div className="bracket-side-right flex gap-2">
-        {col("SF", RIGHT_SF, [sfGap])}
-        {col("QF", RIGHT_QF, [qfGap, qfGap * 3])}
-        {col("R16", RIGHT_R16, [r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3])}
-        {col("R32", RIGHT_R32, r32Margins)}
+      {/* Right: SF (toward final) → R32 (outer edge) */}
+      <div className="bracket-side">
+        {col("SF", RIGHT_SF)}
+        {col("QF", RIGHT_QF)}
+        {col("R16", RIGHT_R16)}
+        {col("R32", RIGHT_R32)}
       </div>
     </div>
   );
