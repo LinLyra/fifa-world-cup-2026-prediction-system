@@ -34,6 +34,17 @@ git push
 
 Vercel redeploys automatically on push.
 
+## Visitor analytics (Vercel Web Analytics)
+
+Code is already wired (`@vercel/analytics` in `frontend/src/main.tsx`).
+
+1. Vercel Dashboard → your project → **Analytics** → **Enable** Web Analytics.
+2. Redeploy (or push any commit) so production picks up the package.
+3. Open your live `*.vercel.app` URL once (disable ad blockers for testing).
+4. View **Visitors**, **Pageviews**, and custom event **`dashboard_tab`** (which tab users click) in the Analytics tab.
+
+Local `npm run dev` does not send analytics — only the Vercel production deployment does.
+
 ## Comparison
 
 | Host | App | GitHub icon | China access |

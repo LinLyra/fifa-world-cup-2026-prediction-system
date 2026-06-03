@@ -1,3 +1,4 @@
+import { track } from "@vercel/analytics";
 import { useState } from "react";
 import Hero from "./components/Hero";
 import BehindForecastTab from "./components/tabs/BehindForecastTab";
@@ -46,6 +47,11 @@ export default function App() {
     new Set(data.matchMatrix.flatMap((m) => [m.home_team, m.away_team]))
   ).sort();
 
+  const selectTab = (id: TabId) => {
+    setTab(id);
+    track("dashboard_tab", { tab: id });
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#F7F9F8] to-[#EEF2EF] px-4 py-6">
       <div className="mx-auto max-w-7xl">
@@ -56,7 +62,7 @@ export default function App() {
             <button
               key={t.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => selectTab(t.id)}
               className={`rounded-t-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 tab === t.id
                   ? "border border-b-0 border-[#E0E8E3] bg-white text-[#1B5E20] font-bold"
