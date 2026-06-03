@@ -477,7 +477,7 @@ def render_hero(team_count: int | None) -> None:
         ("Simulations", f"{SIMULATIONS:,}"),
         ("Historical Matches", HISTORICAL_MATCHES),
         ("Teams Modeled", str(team_count) if team_count else "48"),
-        ("Engine", "V2 Pre-Match Forecast (Jun 3)"),
+        ("Engine", "V2 Pre-Match Forecast"),
     ]
     for col, (label, value) in zip(cols, metrics):
         with col:
