@@ -1,3 +1,6 @@
+frontend/node_modules/
+frontend/dist/
+
 venv/
 __pycache__/
 .ipynb_checkpoints/
@@ -8,8 +11,31 @@ __pycache__/
 .DS_Store
 
 .env
+.env.local
+*.env
+!.env.example
+.streamlit/secrets.toml
 
-data/raw/
-data/features/
-data/predictions/
-data/intelligence/
+# Generated deploy bundle (re-run scripts/prepare_site_deploy.py locally)
+site_deploy/
+
+# Data: ignore by default, whitelist dashboard CSVs for Streamlit Cloud
+data/raw/*
+!data/raw/group_fixtures_final.csv
+
+data/features/*
+!data/features/team_intelligence_v2.csv
+
+data/predictions/*
+!data/predictions/world_cup_champion_probabilities_v2.csv
+!data/predictions/group_stage_simulation_v3_summary.csv
+!data/predictions/match_strength_matrix_v2.csv
+!data/predictions/world_cup_brackets_v1.csv
+!data/predictions/path_difficulty_v1.csv
+
+data/intelligence/*
+!data/intelligence/final_match_intelligence_v1.csv
+
+# Still ignore other data trees unless whitelisted above
+data/processed/
+data/raw/official_elo/
