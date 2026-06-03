@@ -318,13 +318,13 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
   return (
     <div className="w-full rounded-xl bg-gradient-to-b from-slate-950 to-slate-900 p-4 shadow-xl ring-1 ring-slate-700">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <label className="text-sm text-slate-300">Most Probable Knockout Journey</label>
+        <label className="text-sm text-slate-300">Highlight team path</label>
         <select
           className="max-w-xs rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100"
           value={activeTeam ?? ""}
           onChange={(e) => setActiveTeam(e.target.value || null)}
         >
-          <option value="">— Full bracket (no team selected) —</option>
+          <option value="">— Full consensus bracket —</option>
           {teams.map((t) => (
             <option key={t} value={t}>
               {t}
@@ -335,8 +335,8 @@ export default function BracketPathTree({ data, reachProbs = [] }: Props) {
 
       {activeTeam && (
         <div className="mb-4 rounded-lg border border-sky-500/30 bg-sky-950/40 p-3 text-sm text-slate-200">
-          Highlighted route = the <strong>most likely knockout path</strong> for this team on the consensus bracket.
-          It is <strong>not</strong> a guaranteed route or a title prediction.
+          Projected route on the <strong>consensus bracket</strong> — the most likely knockout path for this team if
+          the modal draw and model win probabilities hold. Not a single simulated run or a guaranteed title path.
         </div>
       )}
 

@@ -841,7 +841,7 @@ def render_bracket_path_tree(
 ) -> None:
     section(
         "🌳 Bracket",
-        "What is each team's path to the trophy?",
+        "Consensus knockout pathway from 20,000 full-tournament simulations.",
     )
 
     if brackets is None or matchups is None:
@@ -867,26 +867,32 @@ def render_bracket_path_tree(
     teams = sorted({m.home for m in matches} | {m.away for m in matches} | {m.winner for m in matches})
 
     st.markdown("#### Consensus Knockout Bracket")
-    st.caption(
-        "Single most-likely tournament tree from the modal Round of 32 draw and model win "
-        "probabilities. This is **not** every parallel simulation — it is one readable reference bracket."
+    st.markdown(
+        """
+        This bracket represents the most probable knockout pathway derived from 20,000 World Cup simulations.
+
+        Each matchup reflects the most frequently occurring pairing at that stage, together with the model's estimated win probability.
+
+        It is not a single simulated tournament, but a consensus view of how the tournament is most likely to unfold.
+        """
     )
+    st.caption("Select a team to highlight its projected route to the trophy.")
     st.caption(
         "Use **Fit**, drag, scroll, or **+/−** to navigate the bracket viewer."
     )
 
     active = st.selectbox(
-        "Most Probable Knockout Journey",
-        ["— Full bracket (no team selected) —"] + teams,
+        "Highlight team path",
+        ["— Full consensus bracket —"] + teams,
         index=0,
     )
     active_team = None if active.startswith("—") else active
 
     if active_team:
         st.info(
-            "Highlighted route = the **most likely knockout path** for this team on the "
-            "consensus bracket (where the model picks them to win each round until an "
-            "opponent is favoured). It is **not** a guaranteed route or a title prediction."
+            "Projected route on the **consensus bracket** — the most likely knockout path for this "
+            "team if the modal draw and model win probabilities hold. Not a single simulated run "
+            "or a guaranteed title path."
         )
         path_ids = trace_team_path(matches, active_team)
         if not path_ids:

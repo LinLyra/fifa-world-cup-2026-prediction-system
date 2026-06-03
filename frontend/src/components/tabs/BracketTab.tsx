@@ -12,15 +12,24 @@ export default function BracketTab({ bracket, reachProbs }: Props) {
   const final = bracket.matches.find((m) => m.match_id === 104);
 
   return (
-    <Section title="🌳 Bracket" tagline="What is each team's path to the trophy?">
-      <h3 className="mb-1 text-base font-bold text-[#111]">Consensus Knockout Bracket</h3>
-      <p className="mb-1 text-sm text-[#555]">
-        Single most-likely tournament tree from the modal Round of 32 draw and model win probabilities. This is{" "}
-        <strong>not</strong> every parallel simulation — it is one readable reference bracket.
+    <Section title="🌳 Bracket" tagline="Consensus knockout pathway from 20,000 full-tournament simulations.">
+      <h3 className="mb-3 text-base font-bold text-[#111]">Consensus Knockout Bracket</h3>
+      <p className="mb-2 text-sm leading-relaxed text-[#555]">
+        This bracket represents the most probable knockout pathway derived from 20,000 World Cup simulations.
       </p>
-      <p className="mb-4 text-sm text-[#555]">
-        Use <strong>Fit</strong>, drag, scroll, or <strong>+/−</strong> on the full bracket. Select a team to see their
-        knockout journey as a separate path (full bracket stays in the expander below).
+      <p className="mb-2 text-sm leading-relaxed text-[#555]">
+        Each matchup reflects the most frequently occurring pairing at that stage, together with the model&apos;s
+        estimated win probability.
+      </p>
+      <p className="mb-3 text-sm leading-relaxed text-[#555]">
+        It is not a single simulated tournament, but a consensus view of how the tournament is most likely to unfold.
+      </p>
+      <p className="mb-1 text-sm font-medium text-[#333]">
+        Select a team to highlight its projected route to the trophy.
+      </p>
+      <p className="mb-4 text-xs text-[#777]">
+        Use <strong>Fit</strong>, drag, or <strong>+/−</strong> to navigate the full bracket. The complete tree is in
+        the expander when a team is selected.
       </p>
 
       <BracketPathTree data={bracket} reachProbs={reachProbs} />
