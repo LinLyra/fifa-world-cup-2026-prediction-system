@@ -117,6 +117,25 @@ function MatchCard({
 }) {
   const homeWin = m.winner === m.home;
   const awayWin = m.winner === m.away;
+  const homeHigher = m.p_home >= m.p_away;
+  const top = homeHigher
+    ? { name: m.home, p: m.p_home, win: homeWin, tracked: activeTeam === m.home }
+    : { name: m.away, p: m.p_away, win: awayWin, tracked: activeTeam === m.away };
+  const bottom = homeHigher
+    ? { name: m.away, p: m.p_away, win: awayWin, tracked: activeTeam === m.away }
+    : { name: m.home, p: m.p_home, win: homeWin, tracked: activeTeam === m.home };
+
+  const row = (t: typeof top) => (
+    <div
+      className={`flex items-center gap-2 rounded-md px-1 py-1 ${
+        t.win ? "bg-blue-500/25 ring-1 ring-blue-500" : ""
+      } ${t.tracked ? "ring-1 ring-amber-400" : ""}`}
+    >
+      <span className="text-xl leading-none">{flag(t.name)}</span>
+      <span className="flex-1 text-xs font-semibold text-slate-100">{t.name}</span>
+      <span className="text-xs text-slate-400">{(t.p * 100).toFixed(1)}%</span>
+    </div>
+  );
 
   return (
     <div
@@ -127,25 +146,9 @@ function MatchCard({
       } ${dimmed ? "opacity-30" : "opacity-100"}`}
       onMouseEnter={() => onHover(m)}
     >
-      <div
-        className={`flex items-center gap-2 rounded-md px-1 py-1 ${
-          homeWin ? "bg-blue-500/25 ring-1 ring-blue-500" : ""
-        } ${activeTeam === m.home ? "ring-1 ring-amber-400" : ""}`}
-      >
-        <span className="text-xl leading-none">{flag(m.home)}</span>
-        <span className="flex-1 text-xs font-semibold text-slate-100">{m.home}</span>
-        <span className="text-xs text-slate-400">{(m.p_home * 100).toFixed(1)}%</span>
-      </div>
+      {row(top)}
       <div className="my-0.5 text-center text-[10px] font-extrabold tracking-wider text-slate-500">VS</div>
-      <div
-        className={`flex items-center gap-2 rounded-md px-1 py-1 ${
-          awayWin ? "bg-blue-500/25 ring-1 ring-blue-500" : ""
-        } ${activeTeam === m.away ? "ring-1 ring-amber-400" : ""}`}
-      >
-        <span className="text-xl leading-none">{flag(m.away)}</span>
-        <span className="flex-1 text-xs font-semibold text-slate-100">{m.away}</span>
-        <span className="text-xs text-slate-400">{(m.p_away * 100).toFixed(1)}%</span>
-      </div>
+      {row(bottom)}
       {championProb !== undefined && m.match_id === 104 && (
         <p className="mt-2 text-center text-xs text-amber-200">
           {flag(m.winner)} <strong>{m.winner}</strong> · {(championProb * 100).toFixed(1)}% title
@@ -248,8 +251,9 @@ function FullBracketGrid({
   );
 
   return (
-    <div className="inline-flex min-w-max items-start justify-center gap-3 py-2">
-      <div className="flex gap-2">
+    <div className="bracket-grid inline-flex min-w-max items-stretch justify-center gap-2.5 py-2">
+      {/* Left: R32 (outer) → SF (toward final) */}
+      <div className="bracket-side-left flex gap-2">
         {col("R32", LEFT_R32, r32Margins)}
         {col("R16", LEFT_R16, [r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3])}
         {col("QF", LEFT_QF, [qfGap, qfGap * 3])}
@@ -271,7 +275,8 @@ function FullBracketGrid({
         </div>
       )}
 
-      <div className="flex flex-row-reverse gap-2">
+      {/* Right: SF (toward final) → R32 (outer edge), mirrors Streamlit */}
+      <div className="bracket-side-right flex gap-2">
         {col("SF", RIGHT_SF, [sfGap])}
         {col("QF", RIGHT_QF, [qfGap, qfGap * 3])}
         {col("R16", RIGHT_R16, [r16Gap, r16Gap * 3, r16Gap * 3, r16Gap * 3])}

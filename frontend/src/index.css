@@ -119,4 +119,13 @@
     transform-origin: 0 0;
     display: inline-block;
   }
+
+  .bracket-grid {
+    min-height: 640px;
+  }
+
+  .bracket-side-left,
+  .bracket-side-right {
+    @apply flex items-stretch gap-2;
+  }
 }
