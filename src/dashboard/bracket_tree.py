@@ -29,6 +29,25 @@ KNOCKOUT_LINKS: list[tuple[int, int, int]] = [
 
 LEFT_R32 = [73, 74, 76, 79, 81, 82, 86, 88]
 RIGHT_R32 = [75, 77, 78, 80, 83, 84, 85, 87]
+
+R32_SLOT_LABELS: dict[int, tuple[str, str]] = {
+    73: ("Runner-up Group A", "Runner-up Group B"),
+    74: ("Winner Group C", "Runner-up Group F"),
+    75: ("Winner Group E", "Best 3rd (Groups A/B/C/D/F)"),
+    76: ("Winner Group F", "Runner-up Group C"),
+    77: ("Runner-up Group E", "Runner-up Group I"),
+    78: ("Winner Group I", "Best 3rd (Groups C/D/F/G/H)"),
+    79: ("Winner Group A", "Best 3rd (Groups C/E/F/H/I)"),
+    80: ("Winner Group L", "Best 3rd (Groups E/H/I/J/K)"),
+    81: ("Winner Group G", "Best 3rd (Groups A/E/H/I/J)"),
+    82: ("Winner Group D", "Best 3rd (Groups B/E/F/I/J)"),
+    83: ("Runner-up Group K", "Runner-up Group L"),
+    84: ("Winner Group H", "Runner-up Group J"),
+    85: ("Winner Group B", "Best 3rd (Groups E/F/G/I/J)"),
+    86: ("Runner-up Group D", "Runner-up Group G"),
+    87: ("Winner Group J", "Runner-up Group H"),
+    88: ("Winner Group K", "Best 3rd (Groups D/E/I/J/L)"),
+}
 LEFT_R16 = [89, 90, 91, 92]
 RIGHT_R16 = [93, 94, 95, 96]
 LEFT_QF = [97, 98]
@@ -147,18 +166,53 @@ def pick_winner(
     return team_b, p_a, p_b
 
 
+def _r32_bracket_signature(sim_r32: pd.DataFrame) -> str:
+    """Canonical key for a full 16-match Round of 32 draw."""
+    parts = []
+    for _, row in sim_r32.sort_values("match_id").iterrows():
+        parts.append(f"{int(row['match_id'])}:{row['home_team']}|{row['away_team']}")
+    return ";".join(parts)
+
+
+def _r32_draw_is_valid(sim_r32: pd.DataFrame) -> bool:
+    teams = []
+    for col in ("home_team", "away_team"):
+        for val in sim_r32[col]:
+            if pd.notna(val) and str(val).strip():
+                teams.append(str(val))
+    return len(teams) == 32 and len(set(teams)) == 32
+
+
 def load_modal_r32(brackets: pd.DataFrame) -> dict[int, tuple[str, str, str]]:
-    """Most frequent Round of 32 draw across all simulations."""
+    """Most frequent *complete* Round of 32 draw (joint modal), not per-match modes."""
     r32 = brackets[brackets["round"] == "Round of 32"].copy()
-    out: dict[int, tuple[str, str, str]] = {}
-    for mid, grp in r32.groupby("match_id"):
-        pairs = grp.apply(
-            lambda r: f"{r['home_team']}|{r['away_team']}", axis=1
-        )
-        mode = pairs.value_counts().index[0]
-        home, away = mode.split("|", 1)
-        out[int(mid)] = ("Round of 32", home, away)
-    return out
+    if r32.empty:
+        return {}
+
+    sig_counts: dict[str, int] = {}
+    sig_draws: dict[str, dict[int, tuple[str, str, str]]] = {}
+
+    for sim_id, sim_df in r32.groupby("simulation_id"):
+        if not _r32_draw_is_valid(sim_df):
+            continue
+        sig = _r32_bracket_signature(sim_df)
+        sig_counts[sig] = sig_counts.get(sig, 0) + 1
+        if sig not in sig_draws:
+            draw: dict[int, tuple[str, str, str]] = {}
+            for _, row in sim_df.sort_values("match_id").iterrows():
+                mid = int(row["match_id"])
+                draw[mid] = (
+                    "Round of 32",
+                    str(row["home_team"]),
+                    str(row["away_team"]),
+                )
+            sig_draws[sig] = draw
+
+    if not sig_counts:
+        return {}
+
+    best_sig = max(sig_counts, key=sig_counts.get)
+    return sig_draws[best_sig]
 
 
 def load_r32_template(brackets: pd.DataFrame, sim_id: int = 1) -> dict[int, tuple[str, str, str]]:

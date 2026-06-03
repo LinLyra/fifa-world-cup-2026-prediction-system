@@ -533,11 +533,24 @@ def get_reach_probs(brackets: pd.DataFrame, matchups: pd.DataFrame, _fp: str) ->
     return compute_reach_probs(brackets, matchups)
 
 
-def render_groups(df: pd.DataFrame | None) -> None:
+def render_groups(
+    df: pd.DataFrame | None,
+    fixtures_df: pd.DataFrame | None = None,
+) -> None:
     section("📊 Who Survives the Group Stage?", "Advance probabilities including best third-place routes.")
     if df is None:
         warn_missing("groups", "Group stage simulation summary")
         return
+
+    if fixtures_df is not None:
+        from group_reference import group_letter_reference_table
+
+        ref = group_letter_reference_table(fixtures_df, df, matches=None)
+        with st.expander("Groups A–L (four teams per group)", expanded=True):
+            st.caption(
+                "Model Win / Top 2 / Advance only. Knockout slot mapping is on the **Bracket** tab."
+            )
+            st.dataframe(ref, use_container_width=True, hide_index=True)
 
     ranked = df.sort_values("advance_prob", ascending=False).copy()
     top = ranked.head(15)
@@ -838,6 +851,8 @@ def render_bracket_path_tree(
     matchups: pd.DataFrame | None,
     champion_df: pd.DataFrame | None,
     path_df: pd.DataFrame | None,
+    fixtures_df: pd.DataFrame | None = None,
+    groups_df: pd.DataFrame | None = None,
 ) -> None:
     section(
         "🌳 Bracket",
@@ -867,19 +882,20 @@ def render_bracket_path_tree(
     teams = sorted({m.home for m in matches} | {m.away for m in matches} | {m.winner for m in matches})
 
     st.markdown("#### Consensus Knockout Bracket")
+    st.info(
+        "Round of 32 shows the **most frequent complete draw** across 20,000 simulations — not always the "
+        "same teams as the highest **group winner %** on the Groups tab (e.g. Germany may be ~52% to win "
+        "Group E while another team occupies the E winner slot in this draw). Expand **Groups A–L** below "
+        "to map each letter to teams and this bracket."
+    )
     st.markdown(
         """
-        This bracket represents the most probable knockout pathway derived from 20,000 World Cup simulations.
+        **Round of 32** = joint-modal draw (32 unique teams). **R16 → Final** = KO win % on that path.
 
-        Each matchup reflects the most frequently occurring pairing at that stage, together with the model's estimated win probability.
-
-        It is not a single simulated tournament, but a consensus view of how the tournament is most likely to unfold.
+        Tree percentages are **KO win %**, not group advance rates.
         """
     )
     st.caption("Select a team to highlight its projected route to the trophy.")
-    st.caption(
-        "Use **Fit**, drag, scroll, or **+/−** to navigate the bracket viewer."
-    )
 
     active = st.selectbox(
         "Highlight team path",
@@ -935,6 +951,16 @@ def render_bracket_path_tree(
             f"(model KO edge **{f.winner}** {max(f.p_home, f.p_away):.0%}). "
             f"See **Champion** tab for title probabilities."
         )
+
+    if fixtures_df is not None and groups_df is not None:
+        from group_reference import group_letter_reference_table
+
+        ref = group_letter_reference_table(fixtures_df, groups_df, matches)
+        with st.expander("Groups A–L: teams, model %, and this R32 draw"):
+            st.caption(
+                "Win / Top 2 / Advance match the Groups tab. **This R32 draw** = consensus bracket only."
+            )
+            st.dataframe(ref, use_container_width=True, hide_index=True)
 
 
 def render_behind_the_forecast() -> None:
@@ -1019,10 +1045,17 @@ def main() -> None:
         render_champion(champion_df)
 
     with tab2:
-        render_groups(groups_df)
+        render_groups(groups_df, fixtures_df)
 
     with tab3:
-        render_bracket_path_tree(brackets_df, matchups_df, champion_df, path_df)
+        render_bracket_path_tree(
+            brackets_df,
+            matchups_df,
+            champion_df,
+            path_df,
+            fixtures_df,
+            groups_df,
+        )
 
     with tab4:
         render_path_difficulty(path_df, champion_df)

@@ -8,14 +8,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { GroupRow } from "../../types";
+import type { FixtureRow, GroupRow } from "../../types";
 import DataTable from "../DataTable";
+import GroupStageByLetter from "../GroupStageByLetter";
 import Section from "../Section";
 import { COLORS, pct } from "../../utils/format";
 
-type Props = { groups: GroupRow[] };
+type Props = { groups: GroupRow[]; fixtures: FixtureRow[] };
 
-export default function GroupsTab({ groups }: Props) {
+export default function GroupsTab({ groups, fixtures }: Props) {
   const ranked = [...groups].sort((a, b) => b.advance_prob - a.advance_prob);
   const top = ranked.slice(0, 15);
   const chartData = top.map((g) => ({
@@ -45,7 +46,18 @@ export default function GroupsTab({ groups }: Props) {
         </ResponsiveContainer>
       </div>
 
-      <h3 className="mb-2 text-base font-bold text-[#111]">Group Qualification — All Teams</h3>
+      <details className="mb-6 rounded-lg border border-[#E0E8E3] bg-[#F7F9F8] px-4 py-3" open>
+        <summary className="cursor-pointer text-sm font-semibold text-[#1B5E20]">
+          Groups A–L (four teams per group)
+        </summary>
+        <p className="mt-2 text-xs text-[#666]">
+          Model probabilities only — no knockout draw. See the Bracket tab for who appears in the consensus Round of
+          32.
+        </p>
+        <GroupStageByLetter fixtures={fixtures} groups={groups} title="" compact />
+      </details>
+
+      <h3 className="mb-2 text-base font-bold text-[#111]">Group Qualification — All Teams (ranked)</h3>
       <DataTable
         columns={["Team", "Group Winner", "Top 2", "Advance"]}
         rows={ranked.map((g) => ({
