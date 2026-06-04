@@ -533,24 +533,11 @@ def get_reach_probs(brackets: pd.DataFrame, matchups: pd.DataFrame, _fp: str) ->
     return compute_reach_probs(brackets, matchups)
 
 
-def render_groups(
-    df: pd.DataFrame | None,
-    fixtures_df: pd.DataFrame | None = None,
-) -> None:
+def render_groups(df: pd.DataFrame | None) -> None:
     section("📊 Who Survives the Group Stage?", "Advance probabilities including best third-place routes.")
     if df is None:
         warn_missing("groups", "Group stage simulation summary")
         return
-
-    if fixtures_df is not None:
-        from group_reference import group_letter_reference_table
-
-        ref = group_letter_reference_table(fixtures_df, df, matches=None)
-        with st.expander("Groups A–L (four teams per group)", expanded=True):
-            st.caption(
-                "Model Win / Top 2 / Advance only. Knockout slot mapping is on the **Bracket** tab."
-            )
-            st.dataframe(ref, use_container_width=True, hide_index=True)
 
     ranked = df.sort_values("advance_prob", ascending=False).copy()
     top = ranked.head(15)
@@ -955,12 +942,13 @@ def render_bracket_path_tree(
     if fixtures_df is not None and groups_df is not None:
         from group_reference import group_letter_reference_table
 
+        st.markdown("---")
+        st.markdown("#### Groups A–L and this Round of 32 draw")
+        st.caption(
+            "Win / Top 2 / Advance match the Groups tab. **This R32 draw** = consensus bracket only."
+        )
         ref = group_letter_reference_table(fixtures_df, groups_df, matches)
-        with st.expander("Groups A–L: teams, model %, and this R32 draw"):
-            st.caption(
-                "Win / Top 2 / Advance match the Groups tab. **This R32 draw** = consensus bracket only."
-            )
-            st.dataframe(ref, use_container_width=True, hide_index=True)
+        st.dataframe(ref, use_container_width=True, hide_index=True)
 
 
 def render_behind_the_forecast() -> None:
@@ -1045,7 +1033,7 @@ def main() -> None:
         render_champion(champion_df)
 
     with tab2:
-        render_groups(groups_df, fixtures_df)
+        render_groups(groups_df)
 
     with tab3:
         render_bracket_path_tree(

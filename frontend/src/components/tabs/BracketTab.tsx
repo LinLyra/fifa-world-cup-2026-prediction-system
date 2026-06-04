@@ -40,16 +40,13 @@ export default function BracketTab({ bracket, reachProbs, groups, fixtures }: Pr
 
       <BracketPathTree data={bracket} reachProbs={reachProbs} />
 
-      <details className="mt-6 rounded-lg border border-[#E0E8E3] bg-[#F7F9F8] px-4 py-3">
-        <summary className="cursor-pointer text-sm font-semibold text-[#1B5E20]">
-          Groups A–L: teams, model probabilities, and this R32 draw
-        </summary>
-        <p className="mt-2 text-xs text-[#666]">
-          Win / Top 2 / Advance match the Groups tab. Highlighted lines show this bracket only (left or right half + match
-          id).
+      <div className="mt-8 border-t border-[#E0E8E3] pt-6">
+        <h3 className="mb-1 text-base font-bold text-[#111]">Groups A–L and this Round of 32 draw</h3>
+        <p className="mb-4 text-xs text-[#666]">
+          Win / Top 2 / Advance match the Groups tab. Lines in blue show who is in this bracket only (half + match id).
         </p>
         <GroupStageByLetter fixtures={fixtures} groups={groups} r32Matches={r32} compact />
-      </details>
+      </div>
 
       {final && (
         <p className="mt-4 text-sm text-[#555]">

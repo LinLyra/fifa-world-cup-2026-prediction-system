@@ -75,7 +75,7 @@ export default function App() {
 
         <div className="rounded-b-xl rounded-tr-xl border border-[#E0E8E3] bg-white/50 p-4 md:p-6">
           {tab === "champion" && <ChampionTab champions={data.champions} />}
-          {tab === "groups" && <GroupsTab groups={data.groups} fixtures={data.fixtures} />}
+          {tab === "groups" && <GroupsTab groups={data.groups} />}
           {tab === "bracket" && (
             <BracketTab
               bracket={data.bracket}
