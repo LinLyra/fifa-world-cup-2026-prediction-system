@@ -1,6 +1,7 @@
 # 2026 FIFA World Cup Probabilistic Forecasting Engine
 
 A football intelligence and forecasting platform for the 2026 FIFA World Cup.
+🔗 https://fifa-world-cup-2026-prediction-syst.vercel.app/
 
 Built on 49,000+ historical international matches, the engine combines team strength modelling, probabilistic score prediction, pre-match intelligence, and 20,000+ Monte Carlo simulations to estimate match outcomes, tournament paths, and championship probabilities.
 
